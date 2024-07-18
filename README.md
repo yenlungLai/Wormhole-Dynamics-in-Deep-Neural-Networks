@@ -1,5 +1,25 @@
-# Emergent-Phenomena-A-Neural-Network-Perspective
+# Why Do Deep Neural Networks Converge? Trajectory-Based Insights and Analysis
 
 
 
-The recent surge in artificial intelligence owes much to the remarkable success of deep learning, powered by deep neural networks. Yet, amidst its triumphs, lingering questions persist regarding the challenges and true capabilities of these networks. In our paper, we venture into the realm of physical systems, with neural networks as our guiding light. We showcase how, without explicit training, even the most basic form—linear neural networks, capable of unlocking insights into describing physical phenomena. Throughout our journey, where we consider time and the thermodynamics of interacting objects, we unveil the emergence of fundamental principles, including Newton's laws of gravity and Einstein's special relativity. Even phenomena like time dilation, the expansion of the universe, dark energy, and wormholes find proper explanation within our exploration, all through principle of locality.
+In this work, we formalize neural networks within
+an extended vector space that incorporates the layer component.
+This formalization enables trajectory-based analysis of the input
+vector as it evolves through each layer of a neural network.
+We demonstrate how the convergence of a neural network
+can be accelerated in an overparameterized regime, ensuring
+convergence to a global minimum. These findings, applicable
+to both linear and non-linear neural networks (with non-linear
+activation functions), provide new insights into simplicity bias
+and shortcut learning. Specifically, we show that overparameterized
+neural networks can achieve rapid convergence and
+perfectly fit random noise, even without explicit regularization
+and gradient computation. This suggests that the convergence
+of neural networks may not solely rely on the gradient-based
+optimization methods commonly employed in contemporary deep
+learning models. While the ability of deep neural networks to
+fit random noise is well-known, our discovery of convergence
+behavior—characterized by the symmetric maximization and
+minimization of pair-wise distances between samples used for
+optimization and testing—has not been previously studied and
+analysed.
