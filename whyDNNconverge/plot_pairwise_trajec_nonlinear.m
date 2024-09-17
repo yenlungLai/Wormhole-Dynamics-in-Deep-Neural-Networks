@@ -1,6 +1,6 @@
 clear all
 n = 100;
-L = 10;
+L = 19;
 cc = 1000;
 N = 1;
 
@@ -21,12 +21,14 @@ for c = [cc]
             inp_vecs = yi;
             RandomfieldM=frmat*RandomfieldM;
 
-
+   
+            yi=[ii;yi];
             yi = yi / norm(yi); % Normalize
             yi = softmax(yi);  % apply non-linear function
             vecsii = [vecsii; (yi')]; % Store the output vectors
 
             yi2=RandomfieldM*inp_vecs2;
+            yi2=[ii;yi2];
             yi2 = yi2 / norm(yi2); % Normalize
             yi2 = softmax(yi2);  % apply non-linear function
             vecsii2 = [vecsii2; (yi2')]; % Store the output vectors
