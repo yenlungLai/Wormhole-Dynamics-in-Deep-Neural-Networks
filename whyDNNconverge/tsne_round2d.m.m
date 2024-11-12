@@ -1,8 +1,6 @@
 clear all;
-
-
 % Initialize parameters
-n = 200; L = 9; k = 50; N = 500; R = 3; % Set R to any desired number of rounds
+n = 2^15; L = 4; k = 50; N = 500; R = 2; % Set R to any desired number of rounds
 gens = []; 
 u = randn(1, k); 
 u = u / norm(u);  % Generate and normalize initial vector u
@@ -113,8 +111,7 @@ for i = 1:L
 end
 
 % Initialize figure for t-SNE plots with K-Means clustering
-figure;
-
+figure('Position', [100, 100, 800, 800]);
 % Iterate over L to generate t-SNE plots for each dataset
 for i = 1:L
     combined_data = [x; y{i}];  % Combine data (x and y{i}) for t-SNE
@@ -142,7 +139,7 @@ for i = 1:L
         0.25, 0.25, 0.25;  % Gray
         0.75, 0.75, 0.75;  % Light Gray
         ];
-    cluster_idx = kmeans(Y, numClusters, 'Replicates', 10);
+    cluster_idx = kmeans(Y, numClusters, 'Replicates', 20);
 
     % Plot each cluster in a different color
     for j = 1:numClusters
