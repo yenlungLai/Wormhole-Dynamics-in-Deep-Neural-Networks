@@ -1,5 +1,6 @@
 % Initialize parameters
-n = 200; L = 12; k = 50; N = 1000; R = 4;  % Generalize to R rounds
+clear all
+n = 2^15; L = 4; k = 50; N = 1100; R = 2;  % Generalize to R rounds
 gens = [];
 u = randn(1, k);
 u = u / norm(u);  % Generate and normalize initial vector u
@@ -87,7 +88,7 @@ lineWidth = 1.5;
 fontSize = 12;
 
 % Create a figure for t-SNE plots
-figure('Position', [100, 100, 800, 800]);  % Square aspect ratio for the whole figure
+figure('Position', [100, 100, 600, 600]);  % Square aspect ratio for the whole figure
 sil_scores = [];  % Array to store silhouette scores
 dbi_scores = [];  % Array to store Davies-Bouldin index
 inter_cluster_distances = [];  % Store inter-cluster distances
@@ -112,9 +113,9 @@ for i = 1:L
     hold off;
 
     % Set axes labels and other properties
-    xlabel('t-SNE D-1', 'FontSize', fontSize);
-    ylabel('t-SNE D-2', 'FontSize', fontSize);
-    zlabel('t-SNE D-3', 'FontSize', fontSize);
+    xlabel('D-1', 'FontSize', fontSize);
+    ylabel('D-2', 'FontSize', fontSize);
+    zlabel('D-3', 'FontSize', fontSize);
     grid on;
     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2);
     axis equal;
@@ -124,7 +125,7 @@ end
 
 
 % Initialize figure for t-SNE plots with K-Means clustering
-figure;
+figure('Position', [100, 100, 600, 600]);  % Square aspect ratio for the whole figure
 
 % Iterate over L to generate t-SNE plots for each dataset
 for i = 1:L
@@ -146,16 +147,14 @@ for i = 1:L
         0.25, 0.25, 0.25;  % Gray
         0.75, 0.75, 0.75;  % Light Gray
         ];
-    % Perform K-Means clustering into 6 clusters
-    numClusters = 10;
-    cluster_idx = kmeans(Y, numClusters);
+    % Perform K-Means clustering into 2R clusters
+    numClusters = 2*R;
+    cluster_idx = kmeans(zscore(Y), numClusters, 'Replicates', 100,'Start', 'plus');
 
     % Create subplot
     subplot(rows, cols, i);
     hold on;
 
-    % Define a set of 6 distinct colors for the clusters
-    clusterColors = lines(numClusters);
 
     % Plot each cluster in a different color
     for j = 1:numClusters
@@ -169,9 +168,9 @@ for i = 1:L
     hold off;
 
     % Set axes labels and other properties
-    xlabel('t-SNE D-1', 'FontSize', fontSize);
-    ylabel('t-SNE D-2', 'FontSize', fontSize);
-    zlabel('t-SNE D-3', 'FontSize', fontSize);
+    xlabel('D-1', 'FontSize', fontSize);
+    ylabel('D-2', 'FontSize', fontSize);
+    zlabel('D-3', 'FontSize', fontSize);
     grid on;
     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2);
     axis equal;
@@ -185,14 +184,69 @@ end
 
 
 
-
-
-
-
-
-
-
-
+% 
+% 
+% % Initialize figure for t-SNE plots with K-Means clustering
+% figure;
+% 
+% % Define a color map for clusters with distinct colors
+%     clusterColors = [
+%         0.00, 0.45, 0.74;  % Blue
+%         0.85, 0.33, 0.10;  % Red
+%         0.93, 0.69, 0.13;  % Yellow
+%         0.49, 0.18, 0.56;  % Purple
+%         0.47, 0.67, 0.19;  % Green
+%         0.30, 0.75, 0.93;  % Cyan
+%         0.64, 0.08, 0.18;  % Dark Red
+%         0.00, 0.50, 0.00;  % Dark Green
+%         0.25, 0.25, 0.25;  % Gray
+%         0.75, 0.75, 0.75;  % Light Gray
+%         ];
+% % Iterate over L to generate t-SNE plots for each dataset
+% for i = 1:L
+%     combined_data = [x; y{i}];  % Combine data (x and y{i}) for t-SNE
+%     rng('default');  % Set random seed for reproducibility
+%     Y = tsne(combined_data, 'NumDimensions', 3);  % Perform t-SNE in 3D
+% 
+%     % Scale the data to improve sensitivity
+%     % Normalize each feature (optional but helps with clustering)
+%     Y = normalize(Y);
+% 
+%     % Perform K-Means clustering with more sensitivity
+%     numClusters = 2 * R;  % You can adjust this value if you want more clusters
+%     cluster_idx = kmeans(Y, numClusters, 'Start', 'plus', 'MaxIter', 5000, 'Replicates', 10);  % Increased iterations and K-means++ initialization
+% 
+%     % Create subplot
+%     subplot(rows, cols, i);
+%     hold on;
+% 
+%     % Plot each cluster in a unique color
+%     for j = 1:numClusters
+%         scatter3(Y(cluster_idx == j, 1), Y(cluster_idx == j, 2), Y(cluster_idx == j, 3), ...
+%             markerSize1, 'filled', 'MarkerEdgeColor', clusterColors(j, :), 'MarkerFaceColor', clusterColors(j, :), 'LineWidth', lineWidth);
+%     end
+% 
+%     % Highlight the first point with a special color
+%     scatter3(Y(1, 1), Y(1, 2), Y(1, 3), markerSize2, 'MarkerEdgeColor', '#000000', 'MarkerFaceColor', '#D95319', 'LineWidth', lineWidth);
+% 
+%     hold off;
+% 
+%     % Set axes labels and other properties
+%     xlabel('t-SNE D-1', 'FontSize', fontSize);
+%     ylabel('t-SNE D-2', 'FontSize', fontSize);
+%     zlabel('t-SNE D-3', 'FontSize', fontSize);
+%     grid on;
+%     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2);
+%     axis equal;
+%     view(3);  % 3D view
+%     title(['$\ell$=' num2str(i)], 'Interpreter', 'latex');
+% end
+% 
+% 
+% 
+% 
+% 
+% 
 
 
 
