@@ -3,10 +3,10 @@ clear all;
 % This code is inheritly same concept applied to tsne_round2d and
 % tsne_round3d, just for clean up purpurse, i have included Lfocus
 % parameter to set our focus on particular Layer feature, for example
-% H=G3G2G1, setting Lfocus=2 means we are observing the change of feagure at
-% 1,2,3 layer after recursively apply H=G2G1 up to layer 2. This is because
-% for too large Lfocus, the feature might collapse into singularity, tsne
-% may not display properly the output distribution.
+% H=G3G2G1, setting Lfocus=2 means we are observing the change of feature at
+% 1,2,3 layer with initially using H=G3G2G1, but recursively apply H=G2G1 only up to layer 2 for up coming iteration. This is because
+% for too large Lfocus, the feature might collapses to be perfect correlated, tsne
+% may not able to look for distinct points in the output distribution.
 
 
 % Initialize parameters
