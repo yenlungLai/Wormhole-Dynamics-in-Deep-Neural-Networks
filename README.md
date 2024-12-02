@@ -1,4 +1,4 @@
-# Wormhole Dynamics in Deep Neural Networks: Bridging Noise and Meaningful Labels
+# Wormhole Dynamics in Deep Neural Networks
 
 
 
