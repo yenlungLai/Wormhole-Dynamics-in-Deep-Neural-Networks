@@ -1,82 +1,65 @@
+clear all;
+
 % Initialize parameters
-clear all
-n = 2^15; L = 4; k = 50; N = 1100; R = 2;  % Generalize to R rounds
+n = 2^20; L = 4; k = 20; N = 200;
 gens = [];
 u = randn(1, k);
 u = u / norm(u);  % Generate and normalize initial vector u
 ii = 1;
 inI = u(:);
-RandomfieldM = eye(length(inI));  % Identity matrix for RandomfieldM
-uvec = [];
-vvec = [];
+w_ell = [];
 
-% Generate uvec for each L
+% Generate output trained feature w for each layer
 while ii <= L
     [y1, frmat] = Encoding_mat(inI, n, length(inI));  % Encoding step
     inI = y1;
     y1 = y1 / norm(y1);  % Normalize the result
-    frmatii{ii} = frmat;  % Store encoding matrix
-    uvec = [uvec; y1'];  % Store vectors
+    frmatii{ii} = frmat;  % Store weight matrix, G_ell
+    w_ell = [w_ell; y1'];  % Store vectors w_ell
     ii = ii + 1;
 end
 
-% Initialize vveccell for arbitrary rounds
-vveccell = cell(R, 1);
-vveccell{1} = cell(N, 1);  % Initialize first round
-
-% Generate vveccell_1 for N iterations (First round)
-for i = 1:N
-    disp(['gen', num2str(i)]);
-    v = randn(1, k);  % Generate random vector v
-    vvec = [];
-    vf = v;
-    for ii = 1:L
-        fmatii = frmatii{ii};
-        y2 = fmatii * vf';  % Apply transformation
-        y2 = y2 / norm(y2); vf = y2';  % Normalize and update vector
-        vvec = [vvec; y2'];
-    end
-    vveccell{1}{i} = vvec;  % Store transformed vectors for first round
+% Feature selection for Lfocus
+Lfocus = 1;
+G_L = eye(length(u));
+for ii = 1:Lfocus
+    G_L = frmatii{ii} * G_L;  % H = GL...G1
 end
 
-% Generate vveccell for R rounds
-for r = 2:R
-    vveccell{r} = cell(N, 1);  % Initialize next round
-    for i = 1:N
-        disp(['gen (round ', num2str(r), ') ', num2str(i)]);
-        vvec = [];
-        for ii = 1:L
-            vvecjj = vveccell{r-1}{i};  % Use previous round's results
-            vf = vvecjj(ii, :);  % Get corresponding vector
-            fmatii = frmatii{ii};
-            y2 = fmatii * vf';  % Apply transformation
-            y2 = y2 / norm(y2);
-            vvec = [vvec; y2'];
-        end
-        vveccell{r}{i} = vvec;  % Store transformed vectors
+[vini, labels] = generateClusters(N, k);
+
+for Ncount = 1:N  % Generate layer feature for each point N
+    v = vini(:, Ncount);
+    v = randn(k, 1);
+    wp_ell = [];
+    for ell = 1:L
+        G_ell = frmatii{ell};
+        wp_i = G_ell * v;
+        wp_i = wp_i / norm(wp_i)';
+        v = wp_i;
+        wp_ell = [wp_ell; v'];
     end
+    featureset{Ncount} = wp_ell;  % N point cell, each has L feature (Dim-K)
 end
 
-% Combine all vveccell rounds into one for t-SNE
-combined_vveccell = vertcat(vveccell{:});  % Concatenate all rounds
-
-% Prepare data for t-SNE
+vv2 = [];
 for ll = 1:L
-    uvL = uvec(ll, :);
     vv = [];
-    for jj = 1:(R * N)  % Total entries across R rounds
-        vvecjj = combined_vveccell{jj};
+    for jj = 1:N  % Adjust for all layers and N samples
+        vvecjj = featureset{jj};
         vvecs = vvecjj(ll, :);
         vv = [vv; vvecs];
     end
-    vvL{ll} = vv;  % Store vectors for t-SNE
+    vv2 = [vv2; vv];
+    vvL{ll} = vv2;  % Store vectors for t-SNE
 end
-
-x = uvL;  % Set up the 'x' vector for plotting
 
 for i = 1:L
-    y{i} = vvL{i};  % Prepare data for each subplot
+    y{i} = vvL{i};  % Prepare data for each subplot for a particular i-th layer feature
 end
+
+
+x=u;
 
 % Number of rows and columns for subplots
 cols = ceil(sqrt(L));
@@ -120,7 +103,7 @@ for i = 1:L
     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2);
     axis equal;
     view(3);  % 3D view
-    title(['$\ell$=' num2str(i)], 'Interpreter', 'latex');
+    title(['$L$=' num2str(i)], 'Interpreter', 'latex');
 end
 
 
@@ -134,21 +117,36 @@ for i = 1:L
     Y = tsne(combined_data, 'NumDimensions', 3);  % Perform t-SNE in 3D
 
 
-    %     % Use a larger pool from the lines colormap
-    clusterColors = [
-        0.00, 0.45, 0.74;  % Blue
-        0.85, 0.33, 0.10;  % Red
-        0.93, 0.69, 0.13;  % Yellow
-        0.49, 0.18, 0.56;  % Purple
-        0.47, 0.67, 0.19;  % Green
-        0.30, 0.75, 0.93;  % Cyan
-        0.64, 0.08, 0.18;  % Dark Red
-        0.00, 0.50, 0.00;  % Dark Green
-        0.25, 0.25, 0.25;  % Gray
-        0.75, 0.75, 0.75;  % Light Gray
-        ];
+    % Custom set of 20 visually distinct colors
+clusterColors = [
+    0.00, 0.45, 0.74;  % Blue
+    0.85, 0.33, 0.10;  % Red
+    0.93, 0.69, 0.13;  % Yellow
+    0.49, 0.18, 0.56;  % Purple
+    0.47, 0.67, 0.19;  % Green
+    0.30, 0.75, 0.93;  % Cyan
+    0.64, 0.08, 0.18;  % Dark Red
+    0.00, 0.50, 0.00;  % Dark Green
+    0.25, 0.25, 0.25;  % Gray
+    0.75, 0.75, 0.75;  % Light Gray
+    0.10, 0.80, 0.40;  % Light Green
+    0.80, 0.20, 0.80;  % Violet
+    1.00, 0.50, 0.00;  % Orange
+    0.50, 0.00, 0.50;  % Dark Purple
+    0.00, 0.75, 0.75;  % Turquoise
+    0.80, 0.80, 0.00;  % Olive
+    0.80, 0.00, 0.80;  % Magenta
+    0.00, 0.80, 0.20;  % Emerald
+    0.60, 0.80, 0.00;  % Lime Green
+    0.90, 0.20, 0.20;  % Crimson
+    0.00, 0.60, 0.60;  % Teal
+    0.20, 0.60, 0.80;  % Sky Blue
+    0.90, 0.70, 0.20;  % Gold
+    0.80, 0.60, 0.20;  % Bronze
+    0.50, 0.80, 0.40;  % Mint Green
+];
     % Perform K-Means clustering into 2R clusters
-    numClusters = 2*R;
+    numClusters = 2*i;
     cluster_idx = kmeans(zscore(Y), numClusters, 'Replicates', 100,'Start', 'plus');
 
     % Create subplot
@@ -175,7 +173,7 @@ for i = 1:L
     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2);
     axis equal;
     view(3);  % 3D view
-    title(['$\ell$=' num2str(i)], 'Interpreter', 'latex');
+    title(['$L$=' num2str(i)], 'Interpreter', 'latex');
 end
 
 
@@ -184,69 +182,6 @@ end
 
 
 
-% 
-% 
-% % Initialize figure for t-SNE plots with K-Means clustering
-% figure;
-% 
-% % Define a color map for clusters with distinct colors
-%     clusterColors = [
-%         0.00, 0.45, 0.74;  % Blue
-%         0.85, 0.33, 0.10;  % Red
-%         0.93, 0.69, 0.13;  % Yellow
-%         0.49, 0.18, 0.56;  % Purple
-%         0.47, 0.67, 0.19;  % Green
-%         0.30, 0.75, 0.93;  % Cyan
-%         0.64, 0.08, 0.18;  % Dark Red
-%         0.00, 0.50, 0.00;  % Dark Green
-%         0.25, 0.25, 0.25;  % Gray
-%         0.75, 0.75, 0.75;  % Light Gray
-%         ];
-% % Iterate over L to generate t-SNE plots for each dataset
-% for i = 1:L
-%     combined_data = [x; y{i}];  % Combine data (x and y{i}) for t-SNE
-%     rng('default');  % Set random seed for reproducibility
-%     Y = tsne(combined_data, 'NumDimensions', 3);  % Perform t-SNE in 3D
-% 
-%     % Scale the data to improve sensitivity
-%     % Normalize each feature (optional but helps with clustering)
-%     Y = normalize(Y);
-% 
-%     % Perform K-Means clustering with more sensitivity
-%     numClusters = 2 * R;  % You can adjust this value if you want more clusters
-%     cluster_idx = kmeans(Y, numClusters, 'Start', 'plus', 'MaxIter', 5000, 'Replicates', 10);  % Increased iterations and K-means++ initialization
-% 
-%     % Create subplot
-%     subplot(rows, cols, i);
-%     hold on;
-% 
-%     % Plot each cluster in a unique color
-%     for j = 1:numClusters
-%         scatter3(Y(cluster_idx == j, 1), Y(cluster_idx == j, 2), Y(cluster_idx == j, 3), ...
-%             markerSize1, 'filled', 'MarkerEdgeColor', clusterColors(j, :), 'MarkerFaceColor', clusterColors(j, :), 'LineWidth', lineWidth);
-%     end
-% 
-%     % Highlight the first point with a special color
-%     scatter3(Y(1, 1), Y(1, 2), Y(1, 3), markerSize2, 'MarkerEdgeColor', '#000000', 'MarkerFaceColor', '#D95319', 'LineWidth', lineWidth);
-% 
-%     hold off;
-% 
-%     % Set axes labels and other properties
-%     xlabel('t-SNE D-1', 'FontSize', fontSize);
-%     ylabel('t-SNE D-2', 'FontSize', fontSize);
-%     zlabel('t-SNE D-3', 'FontSize', fontSize);
-%     grid on;
-%     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2);
-%     axis equal;
-%     view(3);  % 3D view
-%     title(['$\ell$=' num2str(i)], 'Interpreter', 'latex');
-% end
-% 
-% 
-% 
-% 
-% 
-% 
 
 
 
@@ -263,59 +198,6 @@ end
 
 
 
-%
-%
-%
-%
-% % Initialize figure for t-SNE plots
-% figure;
-%
-% % Iterate over L to generate t-SNE plots for each dataset
-% for i = 1:L
-%     % Combine the data (x and y{i}) for t-SNE
-%     combined_data = [x; y{i}];
-%
-%     rng('default'); % Set random seed for reproducibility
-%     Y = tsne(combined_data, 'NumDimensions', 3); % Perform t-SNE in 3D
-%
-%     % Perform K-Means clustering into 6 clusters
-%     numClusters = 6; % Number of clusters you want
-%     cluster_idx = kmeans(Y, numClusters);
-%
-%     % Create subplot
-%     subplot(rows, cols, i);
-%     hold on;
-%
-%     % Define a set of 6 distinct colors for the clusters
-%     clusterColors = lines(numClusters); % Generate 6 distinct colors
-%
-%     % Plot each cluster in a different color
-%     for j = 1:numClusters
-%         scatter3(Y(cluster_idx == j, 1), Y(cluster_idx == j, 2), Y(cluster_idx == j, 3), ...
-%             markerSize1, 'filled', 'MarkerEdgeColor', clusterColors(j, :), 'MarkerFaceColor', clusterColors(j, :), 'LineWidth', lineWidth);
-%     end
-%
-%     % Optionally, highlight the 'x' vector (or any specific point/points you want to emphasize)
-%     scatter3(Y(1, 1), Y(1, 2), Y(1, 3), markerSize2, 'MarkerEdgeColor', '#000000', 'MarkerFaceColor', '#D95319', 'LineWidth', lineWidth); % Highlight first point
-%
-%     hold off;
-%
-%     % Set axes labels and other properties
-%     xlabel('t-SNE D-1', 'FontSize', fontSize);
-%     ylabel('t-SNE D-2', 'FontSize', fontSize);
-%     zlabel('t-SNE D-3', 'FontSize', fontSize);
-%
-%     % Customize the grid and appearance
-%     grid on;
-%     set(gca, 'FontSize', fontSize, 'LineWidth', 1.2); % Set font size and axis thickness
-%     axis equal; % Set aspect ratio to be equal
-%
-%     % Set the view to 3D explicitly
-%     view(3); % 3D view
-%
-%     % Add title to each subplot
-%     title(['$\ell$=' num2str(i)], 'Interpreter', 'latex');
-% end
 
 
 
@@ -326,6 +208,29 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%  Main function (MaxLikelihood Alg) %%%%%%
 
 
 
@@ -474,4 +379,56 @@ while ii <= L
     RandomfieldM = frmat * RandomfieldM;
     ii = ii + 1;
 end
+end
+
+
+
+
+function [data, labels] = generateClusters(N, dim)
+% Generates synthetic data with 4 clusters in high-dimensional space.
+% N: Total number of points to generate
+% dim: Number of dimensions for the data
+
+% Parameters for synthetic data
+numClusters = 4; % Number of clusters
+pointsPerCluster = N / numClusters; % Divide points equally across clusters
+
+% Set random seed for reproducibility
+rng(42);
+
+% Define cluster centers in high-dimensional space (closer together)
+clusterCenters = [rand(1, dim)*5;
+    rand(1, dim)*5 + 5;
+    rand(1, dim)*5 + 10;
+    rand(1, dim)*5 + 15];
+
+% Define smaller covariance matrices for smaller spread (smaller variance)
+covariances = repmat(0.5 * eye(dim), [1, 1, numClusters]); % Reduce variance to make clusters tighter
+
+% Generate synthetic data
+data = [];
+labels = [];
+
+for i = 1:numClusters
+    % Generate random data for each cluster using multivariate normal distribution
+    clusterData = mvnrnd(clusterCenters(i,:), covariances(:,:,i), pointsPerCluster);
+    data = [data; clusterData];
+    labels = [labels; repmat(i, pointsPerCluster, 1)]; % Assign a label to each cluster
+end
+
+% Optionally visualize the data using PCA if it's high-dimensional
+if dim <= 10 % Only reduce dimensions if the data is high-dimensional
+    [coeff, score, ~] = pca(data);  % PCA for dimensionality reduction
+    reducedData = score(:,1:2);  % Keep the first two principal components
+
+    % Visualize the reduced data
+    figure;
+    gscatter(reducedData(:,1), reducedData(:,2), labels, 'rgbc', 'osd^', 8);
+    title('PCA Visualization of 100D Data with 4 Clusters');
+    xlabel('PC1');
+    ylabel('PC2');
+    legend('Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4');
+    axis equal;
+end
+data=data';
 end
